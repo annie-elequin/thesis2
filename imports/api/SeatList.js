@@ -1,0 +1,1 @@
+export const SeatList = new Mongo.Collection('seats');
