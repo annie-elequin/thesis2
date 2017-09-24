@@ -2,7 +2,7 @@
   <title>Question App</title>
 </head>
 
-<body onload="setActive();">
+<body>
   <h1>Welcome to Meteor!</h1>
 
   <p>{{>statusbuttons}}</p>
@@ -13,12 +13,18 @@
 </body>
 
 <template name="statusbuttons">
-  <button>Good</button>
-  <button>Slow Down</button>
-  <button>Stop</button>
+  {{#if isInactive}}
+    You must be logged in to see this content!
+    {{setActive}}
+  {{else}}
+  <button class="good">Good</button>
+  <button class="meh">Slow Down</button>
+  <button class="bad">Stop</button>
+  {{/if}}
 </template>
 
 <template name="classroom">
+  {{loadColors}}
   <table style="border-spacing:3px;clear:left;text-align:center;">
     <tr>
       <td id="1" style="width:50px;height:50px;background-color:gray;">1</td>
