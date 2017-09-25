@@ -1,9 +1,64 @@
 <head>
   <title>Question App</title>
+  <style>
+  .inquiry {
+    display: table-row;
+    overflow: hidden; 
+    background: lightgray;
+  }
+  #questioncontainer {
+    display: table;
+    clear: right;
+    margin-top: 15px;
+    overflow: hidden;
+    width: 90%;
+  }
+  .vote {
+      display: table-cell; 
+      padding: 3px; 
+      vertical-align: top;
+      text-align: center;
+      width: 35px;
+      font-size: 25px;
+      font-family: Cambria;
+      color: white;
+  }
+  .up .down {
+     display:inline;  
+  }
+  .vote .up:hover {
+      color: black;
+      cursor: pointer;
+  }
+  .vote .down:hover {
+      color: black;
+      cursor: pointer;
+  }
+  .votedup .voteddown {
+      color: black;
+  }
+  .questioncontent {
+    display: table-cell; 
+    padding: 4px;
+    vertical-align: middle;
+  }
+  .activebut {
+    display: table-cell; 
+    float:right;
+    vertical-align: top;
+    font-size: 25px;
+    font-family: Arial;
+    color: gray;
+    padding: 5px;
+  }
+.activebut:hover {
+    color: yellow;
+    cursor: pointer;
+  }
+  </style>
 </head>
 
 <body>
-  <h1>Welcome to Meteor!</h1>
 
   <p>{{>statusbuttons}}</p>
   {{>classroom}}
@@ -14,16 +69,19 @@
 
 <template name="statusbuttons">
   {{#if isInactive}}
-    You must be logged in to see this content!
+    Loading... Please make sure you are logged in!
     {{setActive}}
   {{else}}
+  <h1>Welcome, {{name}}!</h1>
   <button class="good">Good</button>
   <button class="meh">Slow Down</button>
   <button class="bad">Stop</button>
+  <!-- <button class="dev">dev purposes: clear sessions</button> -->
   {{/if}}
 </template>
 
 <template name="classroom">
+  {{#unless isInactive}}
   {{loadColors}}
   <table style="border-spacing:3px;clear:left;text-align:center;">
     <tr>
@@ -87,16 +145,40 @@
       <td id="36" style="width:50px;height:50px;background-color:gray;">36</td>
     </tr>
   </table>
+  {{/unless}}
 </template>
 
 <template name="submitquestion">
+  {{#unless isInactive}}
   <p>
     <form>
         Enter a Question: <input type="text" style="width: 60%;" name="question"/>
         <input type="submit" value="Submit" style="display: inline;"/>
     </form>
   </p>
+  {{/unless}}
 </template>
 
 <template name="questions">
+  {{#unless isInactive}}
+  <div id="questioncontainer">
+      {{#each question}}
+          <div id="inquiry{{_id}}" class="inquiry">
+              <div id="vote{{_id}}" class="vote">
+                  <span class="up {{votedup}}">↑</span>
+                  <span class="down {{voteddown}}">↓</span>
+              </div>
+              <div id="content{{_id}}" class="questioncontent">
+                  {{score}} -- {{content}}
+              </div>
+              {{#if professor}}
+                  <div class="activebut">X</div>
+              {{/if}}
+          </div>
+      {{/each}}
+      {{#each question}}
+          {{colorize}}
+      {{/each}}
+  </div>
+  {{/unless}}
 </template>
