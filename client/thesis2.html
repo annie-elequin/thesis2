@@ -58,7 +58,7 @@
   </style>
 </head>
 
-<body>
+<body onbeforeunload="inactiveFunction();">
 
   <p>{{>statusbuttons}}</p>
   {{>classroom}}
@@ -72,11 +72,14 @@
     Loading... Please make sure you are logged in!
     {{setActive}}
   {{else}}
-  <h1>Welcome, {{name}}!</h1>
+  <h1>Welcome,  {{name}}!</h1>
   <button class="good">Good</button>
   <button class="meh">Slow Down</button>
   <button class="bad">Stop</button>
-  <!-- <button class="dev">dev purposes: clear sessions</button> -->
+    {{#if annie}}
+      <button class="sessions">dev: clear sessions</button>
+      <button class="inactive">dev: set all inactive</button>
+    {{/if}}
   {{/if}}
 </template>
 
@@ -171,7 +174,7 @@
               <div id="content{{_id}}" class="questioncontent">
                   {{score}} -- {{content}}
               </div>
-              {{#if professor}}
+              {{#if prof}}
                   <div class="activebut">X</div>
               {{/if}}
           </div>

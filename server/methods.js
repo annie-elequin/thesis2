@@ -3,13 +3,15 @@ import { Questions } from '/imports/api/Questions';
 import { Log } from '/imports/api/Log';
 
 Meteor.methods({
-    'changeStatus': function(seatID, seatNum, stat) {
+    'changeStatus': function(name, seatID, seatNum, stat) {
         SeatList.update({_id:seatID}, {$set:{status:stat}});
+
+        Log.insert({})
     },
-    'submitQuestion': function(curip, q, scr, stat, d){
+    'submitQuestion': function(name, curip, q, scr, stat, d){
         Questions.insert({IP:curip, content:q, score:scr, status:stat, date:d});
     },
-    'setScore': function(questionID, scr){
+    'setScore': function(name, questionID, scr){
         Questions.update({ _id: questionID }, { $inc:{score:scr} });
     },
     'changeQuestionStatus': function(id, stat){

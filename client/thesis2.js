@@ -7,6 +7,10 @@ import { Meteor } from 'meteor/meteor';
 
 import './thesis2.html';
 
+// if it's "Bill_Booth", he should have access to ANY ip
+// fix the name of who's logged in
+// add the log statements
+
 if(Meteor.isClient){
     Meteor.subscribe('seats');
     Meteor.subscribe('questions');
@@ -42,6 +46,16 @@ if(Meteor.isClient){
         }  
     }
 
+    inactiveFunction = function(){
+        // console.log("inactive Function");
+        var seatID = Session.get('selectedSeat');
+        var name = Session.get('studentName');
+        // console.log("seatid: "+seatID);
+        if(seatID){
+            Meteor.call('changeStatus', seatID, name, "inactive");
+        }
+    }
+
     // client code: ping heartbeat every 5 seconds
     Meteor.setInterval(function () {
         console.log("KEEP ALIVE");
@@ -62,20 +76,21 @@ if(Meteor.isClient){
         'setActive': function(){
             console.log("setActive");
             
-            var curip = "129.62.150.41";
+            // var curip = "129.62.150.41";
             $.get('http://ipinfo.io', function(r){
                 // console.log("in the ip function");
-                // Session.setPersistent('curip',r.ip);
+                Session.setPersistent('curip',r.ip);
                 // console.log(r.ip);
             }, "jsonp");
         
             // set the current IP address
-            Session.setPersistent('curip', curip);
+            // Session.setPersistent('curip', curip);
             console.log("current IP: "+Session.get('curip'));
-            // var curip = Session.get('curip');
+            var curip = Session.get('curip');
         
             if(SeatList){
                 // find and set the current seat value
+                console.log("seatlist exists");
                 var curSeat = SeatList.findOne({ IP: curip });
                 console.log("found a seat with the current IP");
                 console.log(curSeat);
@@ -132,6 +147,14 @@ if(Meteor.isClient){
                 // console.log("no");
                 return true;
             }
+        },
+        'annie': function(){
+            var name = Session.get('studentName');
+            if(name == "Annie_Mathis"){
+                return true;
+            }else{
+                return false;
+            }
         }
     });
 
@@ -145,8 +168,14 @@ if(Meteor.isClient){
         'click .bad': function(){
             Meteor.call('changeStatus', Session.get('seatid'), Session.get('curseat'), "bad");
         },
-        'click .dev': function(){
+        'click .sessions': function(){
             Session.clear();
+        },
+        'click .inactive': function(){
+            // set everyone in the class to inactive
+            SeatList.find({}).forEach(function(doc){
+                Meteor.call('changeStatus', doc._id, doc.seat, "inactive");
+            });
         }
     });
 
@@ -176,7 +205,10 @@ if(Meteor.isClient){
         'isInactive': function(){
             // console.log("is active?");
             // console.log("id: "+Session.get('seatid'));
-            if(Session.get('seatid')){
+            var name = Session.get('studentName');
+            if(Session.get('seatid') || 
+                name == "Annie_Mathis" || 
+                name == "Bill_Booth"){
                 // console.log("yes");
                 return false;
             }else{
@@ -222,9 +254,10 @@ if(Meteor.isClient){
                 return true;
             }
         },
-        'professor': function(){
+        'prof': function(){
             console.log("is this the prof?");
-            if(Session.get('curseat') == 0){
+            var name = Session.get('studentName');
+            if(name == "Bill_Booth" || name == "Annie_Mathis"){
                 return true;
             }else{
                 return false;
@@ -237,6 +270,8 @@ if(Meteor.isClient){
                 document.getElementById("content"+id).style.backgroundColor = rgb(45, (scr*8)+140, 0);
             }else if(scr < 0){
                 document.getElementById("content"+id).style.backgroundColor = rgb((scr*(8))+255,130,180);
+            }else{
+                document.getElementById("content"+id).style.backgroundColor = lightgray;               
             }
 
             var sesh = Session.get(id+"vote");
