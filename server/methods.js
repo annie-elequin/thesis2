@@ -2,17 +2,43 @@ import { SeatList } from '/imports/api/SeatList';
 import { Questions } from '/imports/api/Questions';
 import { Log } from '/imports/api/Log';
 
+var clientIP;
+Meteor.onConnection(function(conn) {
+    console.log("IP ADDRESS");
+    console.log(conn.clientAddress);
+    clientIP = conn.clientAddress;
+  });
+
 Meteor.methods({
-    'changeStatus': function(name, seatID, seatNum, stat) {
+    'ipaddr': function(){
+        console.log("client ip: "+clientIP);
+        return clientIP;
+    },
+    'changeStatus': function(name, seatID, stat) {
         SeatList.update({_id:seatID}, {$set:{status:stat}});
 
-        Log.insert({})
+        var today = Date();
+        var statchange = name+" changed status to "+stat;
+        Log.insert({date:today, stud:name, change:statchange});
     },
     'submitQuestion': function(name, curip, q, scr, stat, d){
         Questions.insert({IP:curip, content:q, score:scr, status:stat, date:d});
+
+        var today = Date();
+        var statchange = name+" submitted question: "+q;
+        Log.insert({date:today, stud:name, change:statchange});
     },
     'setScore': function(name, questionID, scr){
         Questions.update({ _id: questionID }, { $inc:{score:scr} });
+
+        var today = Date();
+        var statchange = name+" voted ";
+        if(scr > 0){
+            statchange+="up";
+        }else{
+            statchange+="down";
+        }
+        Log.insert({date:today, stud:name, change:statchange});
     },
     'changeQuestionStatus': function(id, stat){
         Questions.update({_id: id}, {$set:{status:stat}});
