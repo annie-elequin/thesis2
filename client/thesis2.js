@@ -11,10 +11,15 @@ import './thesis2.html';
 // fix the name of who's logged in
 // add the log statements
 
+
+
 if(Meteor.isClient){
     Meteor.subscribe('seats');
     Meteor.subscribe('questions');
     Meteor.subscribe('log');
+
+    const sesh = Meteor.default_connection._lastSessionId;
+    console.log("id thing: "+Meteor.default_connection._lastSessionId);
 
     function rgb(r, g, b){
         return "rgb("+r+","+g+","+b+")";
@@ -155,6 +160,7 @@ if(Meteor.isClient){
             }); 
 
             if(curip != Session.get('curip')){
+                console.log("calling setActive from inActive function");
                 setActive();
             }
             var id = Session.get('seatid'+curip);            
@@ -219,6 +225,7 @@ if(Meteor.isClient){
             console.log("YOUR IP ADDRESS");
             var i = Session.get('curip');
             console.log(i);
+            console.log(Meteor.default_connection._lastSessionId);
         }
     });
 
@@ -241,7 +248,7 @@ if(Meteor.isClient){
             }); 
 
             if(curip != Session.get('curip')){
-                console.log("calling set active");
+                console.log("calling setActive from inActive function");
                 setActive();
             }
             var id = Session.get('seatid'+curip);            
@@ -277,6 +284,7 @@ if(Meteor.isClient){
             }); 
 
             if(curip != Session.get('curip')){
+                console.log("calling setActive from inActive function");                
                 setActive();
             }
             var id = Session.get('seatid'+curip);            
@@ -337,6 +345,7 @@ if(Meteor.isClient){
             }); 
 
             if(curip != Session.get('curip')){
+                console.log("calling setActive from inActive function");                
                 setActive();
             }
             var id = Session.get('seatid'+curip);            
