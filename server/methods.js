@@ -4,14 +4,11 @@ import { Log } from '/imports/api/Log';
 
 var clientIP;
 Meteor.onConnection(function(conn) {
-    console.log("IP ADDRESS");
-    console.log(conn.clientAddress);
     clientIP = conn.clientAddress;
   });
 
 Meteor.methods({
     'ipaddr': function(){
-        console.log("client ip: "+clientIP);
         return clientIP;
     },
     'changeStatus': function(name, seatID, stat) {

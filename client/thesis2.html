@@ -58,7 +58,7 @@
   </style>
 </head>
 
-<body onunload="inactiveFunction();">
+<body onbeforeunload="inactiveFunction();">
 
   <p>{{>statusbuttons}}</p>
   {{>classroom}}
@@ -80,6 +80,7 @@
     {{#if dev}}
       <button class="sessions">dev: clear sessions</button>
       <button class="inactive">dev: set all inactive</button>
+      <button class="whois">dev: what's my ip?</button>
     {{/if}}
   {{/if}}
 </template>
