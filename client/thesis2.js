@@ -18,9 +18,6 @@ if(Meteor.isClient){
     Meteor.subscribe('questions');
     Meteor.subscribe('log');
 
-    const sesh = Meteor.default_connection._lastSessionId;
-    console.log("id thing: "+Meteor.default_connection._lastSessionId);
-
     function rgb(r, g, b){
         return "rgb("+r+","+g+","+b+")";
     }
@@ -48,7 +45,6 @@ if(Meteor.isClient){
     }
 
     inactiveFunction = function(){
-        var ip = Session.get('curip');
         console.log("ON BEFORE UNLOAD");
         var name = Session.get('studentName'+ip);
         // console.log("seatid: "+seatID);
