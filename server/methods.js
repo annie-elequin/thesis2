@@ -1,6 +1,7 @@
 import { SeatList } from '/imports/api/SeatList';
 import { Questions } from '/imports/api/Questions';
 import { Log } from '/imports/api/Log';
+import { Sessions } from '/imports/api/Sessions';
 
 var clientIP;
 Meteor.onConnection(function(conn) {
@@ -8,6 +9,10 @@ Meteor.onConnection(function(conn) {
   });
 
 Meteor.methods({
+    'getValues': function() {  
+        var ret = {id: this.connection.id, ip: clientIP};   
+        return ret;
+    },
     'ipaddr': function(){
         return clientIP;
     },

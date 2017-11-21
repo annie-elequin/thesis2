@@ -60,17 +60,16 @@
 
 <body onbeforeunload="inactiveFunction();">
 
-  <p>{{>statusbuttons}}</p>
-  {{>classroom}}
-  {{>submitquestion}}
-  {{>questions}}
-
+    <p>{{>statusbuttons}}</p>
+    {{>classroom}}
+    {{>submitquestion}}
+    {{>questions}}
 </body>
 
 <template name="statusbuttons">
+  <!-- {{getip}} -->
   {{#if isInactive}}
     Loading... Please make sure you are logged in! <br />
-    <div class="letmein"></div>
     {{setActive}}
   {{else}}
   <h1>Welcome,  {{name}}!</h1>

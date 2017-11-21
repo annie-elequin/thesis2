@@ -1,0 +1,1 @@
+export const Sessions = new Mongo.Collection('sessions');

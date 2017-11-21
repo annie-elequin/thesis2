@@ -2,8 +2,10 @@ import { Template } from 'meteor/templating';
 import { SeatList } from '/imports/api/SeatList';
 import { Questions } from '/imports/api/Questions';
 import { Log } from '/imports/api/Log';
+import { Sessions } from '/imports/api/Sessions';
 import { HTTP } from 'meteor/http';
 import { Meteor } from 'meteor/meteor';
+import { ReactiveVar } from 'meteor/reactive-var';
 
 import './thesis2.html';
 
@@ -11,12 +13,13 @@ import './thesis2.html';
 // fix the name of who's logged in
 // add the log statements
 
-
-
 if(Meteor.isClient){
     Meteor.subscribe('seats');
     Meteor.subscribe('questions');
     Meteor.subscribe('log');
+    Meteor.subscribe('sessions');
+    
+    var sesh = null;
 
     function rgb(r, g, b){
         return "rgb("+r+","+g+","+b+")";
@@ -46,23 +49,106 @@ if(Meteor.isClient){
 
     inactiveFunction = function(){
         console.log("ON BEFORE UNLOAD");
-        var name = Session.get('studentName'+ip);
+        var name = Session.get('studentName'+Meteor.default_connection._lastSessionId);
         // console.log("seatid: "+seatID);
-        var seatID = Session.get('seatid'+ip);
+        var seatID = Session.get('seatid'+Meteor.default_connection._lastSessionId);
         if(seatID){
             Meteor.call('changeStatus', name, 
-                Session.get('seatid'+ip), "inactive");
+                Session.get('seatid'+Meteor.default_connection._lastSessionId), "inactive");
         }
         Object.keys(Session.keys).forEach(function(key){ Session.set(key, undefined); })
         Session.keys = {}
         Session.clear();
     }
 
+    isInactive = function(){
+        console.log("is active?");
+
+        var ret = true;
+        if(Session.get('sesh'+sesh)){
+            console.log("session exists");
+            ret = false;
+        }
+        return ret;
+
+        // var imposter = true;
+        // Meteor.call('getValues', function(err, obj) {
+        //     console.log("GOT IT");
+        //     Session.set('sesh'+obj.id,obj.id);
+        //     sesh = obj.id;
+        //     Session.set('curip'+sesh,obj.ip);
+
+        //     console.log("these things: "+Session.get('sesh'+sesh));
+        //     console.log(Session.get('curip'+sesh));
+        // });
+        // console.log("WHAT IS HAPPENING: "+sesh);
+
+        // var curip = Session.get('curip'+sesh);
+        // var derp = true;
+        
+        // console.log("in my inactive function");
+        // console.log("sesh "+sesh);
+        // console.log("curip: "+curip);
+
+        // if(sesh){
+        //     console.log("if statement ONE");
+        //     Template.statusbuttons.setActive();
+        //     imposter = false;
+        // }
+        // // Meteor.call('ipaddr', function(e,r){
+        // //     Session.set('curip'+Meteor.default_connection._lastSessionId, r);
+        // // }); 
+
+        // if(curip != Session.get('curip'+sesh)){
+        //     console.log("calling setActive from inActive function");
+        //     Template.statusbuttons.setActive();
+        // }
+        // var id = Session.get('seatid'+sesh);            
+
+        // if(id){
+        //     console.log("yo, there's a seat id");
+        //     var thing = SeatList.findOne({_id:Session.get('seatid'+Meteor.default_connection._lastSessionId)});
+        //     console.log(thing);
+        //     if(thing.status != "inactive"){
+        //         console.log("you're not inactive");
+        //         derp = false;
+        //     }
+        // }
+
+        // var name = Session.get('studentName'+Meteor.default_connection._lastSessionId);
+        // console.log("STUD NAME: "+name);
+        // if(name == "Bill_Booth" || name == "Annie_Mathis"){
+        //     console.log("you're either booth or annie");
+        //     derp = false;
+        // }
+        // return derp;
+
+        // console.log("is active?");
+        // var imposter = true;
+        // if(sesh){
+        //     imposter = false;
+        //     if(!Session.get('curip'+sesh)){
+        //         console.log("sesh, but no ip");
+        //         Meteor.call('ipaddr', function(e,r){
+        //             Session.set('curip'+sesh, r);
+        //             console.log("id (in ip): "+sesh);
+        //             console.log("current ip: "+r);
+        //         }); 
+        //     }else{
+        //         console.log("sesh AND ip");
+        //     }
+        // }
+        // return imposter;
+    }
+
     // client code: ping heartbeat every 5 seconds
     Meteor.setInterval(function () {
         console.log("KEEP ALIVE");
-        var ip = Session.get('curip');
-        Meteor.call('keepalive', Session.get('seatid'+ip));
+        var ip = Session.get('curip'+sesh);
+        if(ip){
+            Meteor.call('keepalive', Session.get('seatid'+sesh));
+        }
+        isInactive();
     }, 5000);
 
     Meteor.setInterval(function () {
@@ -74,15 +160,42 @@ if(Meteor.isClient){
         Session.clear();
     }, 36000000);
 
+    Template.body.onCreated(async function onLoad(){
+        console.log("LOADING");
+        Meteor.call('getValues', function(err, obj) {
+            console.log("GOT IT");
+            Session.set('sesh'+obj.id,obj.id);
+            sesh = obj.id;
+            Session.set('curip'+sesh,obj.ip);
+
+            console.log("these things: "+Session.get('sesh'+sesh));
+            console.log(Session.get('curip'+sesh));
+        });
+    });
+
     Template.statusbuttons.helpers({
+        'getip': function(){
+            console.log("GETIP");
+            Meteor.call('ipaddr', function(e,r){
+                Session.set('curip'+sesh, r);
+                console.log("id (in ip): "+Meteor.default_connection._lastSessionId);
+                console.log("current ip: "+r);
+            }); 
+        },
         'setActive': function(){
             console.log("setActive");
             console.log("HEY LOOK A THING");
-            Meteor.call('ipaddr', function(e,r){
-                Session.set('curip', r);
-            }); 
-            console.log("ip: "+Session.get('curip'));
-            var curip = Session.get('curip');
+
+            // Meteor.call('ipaddr', function(e,r){
+            //     Session.set('curip'+Meteor.default_connection._lastSessionId, r);
+            //     console.log("id (in ip): "+Meteor.default_connection._lastSessionId);
+            //     console.log("current ip: "+r);
+            //     sesh = Meteor.default_connection._lastSessionId;
+            // }); 
+
+            console.log("ip: "+Session.get('curip'+Meteor.default_connection._lastSessionId));
+            console.log("id: "+Meteor.default_connection._lastSessionId);
+            var curip = Session.get('curip'+Meteor.default_connection._lastSessionId);
             console.log("***************");
         
             if(SeatList){
@@ -104,7 +217,7 @@ if(Meteor.isClient){
                         console.log( error );
                         } else {
                             console.log("worked! "+response.content);
-                            Session.setPersistent('studentName'+curip, response.content);
+                            Session.setPersistent('studentName'+Meteor.default_connection._lastSessionId, response.content);
                             // Session.setPersistent('studentName', "Annie_Mathis");
                             if(curSeat.status == "inactive"){
                                 // set the status of the current seat as "active"
@@ -127,61 +240,33 @@ if(Meteor.isClient){
 
                 if(curSeat){
                     // set the current seat number
-                    Session.set('curseat'+curip, curSeat.seat);
+                    Session.set('curseat'+Meteor.default_connection._lastSessionId, curSeat.seat);
                     console.log("Seat session set: "+curSeat.seat);
         
                     // set the current mongo id
-                    Session.set('seatid'+curip, curSeat._id);
+                    Session.set('seatid'+Meteor.default_connection._lastSessionId, curSeat._id);
                     console.log("Seat ID session set: "+curSeat._id);                                    
                 }
 
             }             
         },
         'name': function(){
-            var ip = Session.get('curip');
             console.log("WELCOME");
-            var name = Session.get('studentName'+ip);
+            var name = Session.get('studentName'+Meteor.default_connection._lastSessionId);
             console.log("name: "+name);
             var res = name.split("_");
             // console.log("res: "+res[0]);
             return res[0];
         },
         'isInactive': function(){
-            console.log("is active?");
-            var curip = Session.get('curip');
-            var derp = true;
-
-            Meteor.call('ipaddr', function(e,r){
-                Session.set('curip', r);
-            }); 
-
-            if(curip != Session.get('curip')){
-                console.log("calling setActive from inActive function");
+            var boop = isInactive();
+            if(boop){
                 setActive();
             }
-            var id = Session.get('seatid'+curip);            
-
-            if(id){
-                console.log("yo, there's a seat id");
-                var thing = SeatList.findOne({_id:Session.get('seatid'+curip)});
-                console.log(thing);
-                if(thing.status != "inactive"){
-                    console.log("you're not inactive");
-                    derp = false;
-                }
-            }
-
-            var name = Session.get('studentName'+curip);
-            console.log("STUD NAME: "+name);
-            if(name == "Bill_Booth" || name == "Annie_Mathis"){
-                console.log("you're either booth or annie");
-                derp = false;
-            }
-            return derp;
+            return boop;
         },
         'dev': function(){
-            var ip = Session.get('curip');
-            var name = Session.get('studentName'+ip);
+            var name = Session.get('studentName'+Meteor.default_connection._lastSessionId);
             if(name == "Annie_Mathis" || name == "Bill_Booth"){
                 return true;
             }else{
@@ -192,19 +277,16 @@ if(Meteor.isClient){
 
     Template.statusbuttons.events({
         'click .good': function(){
-            var ip = Session.get('curip');
-            Meteor.call('changeStatus', Session.get('studentName'+ip),
-                Session.get('seatid'), "good");
+            Meteor.call('changeStatus', Session.get('studentName'+Meteor.default_connection._lastSessionId),
+                Session.get('seatid'+Meteor.default_connection._lastSessionId), "good");
         },
         'click .meh': function(){
-            var ip = Session.get('curip');
-            Meteor.call('changeStatus', Session.get('studentName'+ip),
-                Session.get('seatid'), "meh");
+            Meteor.call('changeStatus', Session.get('studentName'+Meteor.default_connection._lastSessionId),
+                Session.get('seatid'+Meteor.default_connection._lastSessionId), "meh");
         },
         'click .bad': function(){
-            var ip = Session.get('curip');
-            Meteor.call('changeStatus', Session.get('studentName'+ip),
-                Session.get('seatid'), "bad");
+            Meteor.call('changeStatus', Session.get('studentName'+Meteor.default_connection._lastSessionId),
+                Session.get('seatid'+Meteor.default_connection._lastSessionId), "bad");
         },
         'click .sessions': function(){
             Session.clear();
@@ -219,7 +301,7 @@ if(Meteor.isClient){
         'click .whois': function(){
             // display ip
             console.log("YOUR IP ADDRESS");
-            var i = Session.get('curip');
+            var i = Session.get('curip'+Meteor.default_connection._lastSessionId);
             console.log(i);
             console.log(Meteor.default_connection._lastSessionId);
         }
@@ -235,84 +317,27 @@ if(Meteor.isClient){
             });
         },
         'isInactive': function(){
-            console.log("is active?");
-            var curip = Session.get('curip');
-            var derp = true;
-
-            Meteor.call('ipaddr', function(e,r){
-                Session.set('curip', r);
-            }); 
-
-            if(curip != Session.get('curip')){
-                console.log("calling setActive from inActive function");
-                setActive();
-            }
-            var id = Session.get('seatid'+curip);            
-
-            if(id){
-                console.log("yo, there's a seat id");
-                var thing = SeatList.findOne({_id:Session.get('seatid'+curip)});
-                console.log(thing);
-                if(thing.status != "inactive"){
-                    console.log("you're not inactive");
-                    derp = false;
-                }
-            }
-
-            var name = Session.get('studentName'+curip);
-            console.log("STUD NAME: "+name);
-            if(name == "Bill_Booth" || name == "Annie_Mathis"){
-                console.log("you're either booth or annie");
-                derp = false;
-            }
-            return derp;
+            var boop = isInactive();
+            return boop;
         }
     });
 
     Template.submitquestion.helpers({
         'isInactive': function(){
-            console.log("is active?");
-            var curip = Session.get('curip');
-            var derp = true;
-
-            Meteor.call('ipaddr', function(e,r){
-                Session.set('curip', r);
-            }); 
-
-            if(curip != Session.get('curip')){
-                console.log("calling setActive from inActive function");                
-                setActive();
-            }
-            var id = Session.get('seatid'+curip);            
-
-            if(id){
-                console.log("yo, there's a seat id");
-                var thing = SeatList.findOne({_id:Session.get('seatid'+curip)});
-                console.log(thing);
-                if(thing.status != "inactive"){
-                    console.log("you're not inactive");
-                    derp = false;
-                }
-            }
-
-            var name = Session.get('studentName'+curip);
-            console.log("STUD NAME: "+name);
-            if(name == "Bill_Booth" || name == "Annie_Mathis"){
-                console.log("you're either booth or annie");
-                derp = false;
-            }
-            return derp;
+            var boop = isInactive();
+            // if(Session.get('sesh'+sesh)){ boop=false; }
+            return boop;
         }
     });
 
     Template.submitquestion.events({
         'submit form': function(event){
-            var ip = Session.get('curip');
+            var ip = Session.get('curip'+Meteor.default_connection._lastSessionId);
             event.preventDefault();
             var question = event.target.question.value;
             console.log("your question is: "+question);
-            var seatID = Session.get('seatid'+ip);
-            var name = Session.get('studentName'+ip);
+            var seatID = Session.get('seatid'+Meteor.default_connection._lastSessionId);
+            var name = Session.get('studentName'+Meteor.default_connection._lastSessionId);
             console.log("seatID: "+seatID);
             // console.log("name: "+name);
             if(seatID){
@@ -332,42 +357,15 @@ if(Meteor.isClient){
             return Questions.find({ status: "active", date: {$gt: today} }, { sort: {score:-1} });
         },
         'isInactive': function(){
-            console.log("is active?");
-            var curip = Session.get('curip');
-            var derp = true;
-
-            Meteor.call('ipaddr', function(e,r){
-                Session.set('curip', r);
-            }); 
-
-            if(curip != Session.get('curip')){
-                console.log("calling setActive from inActive function");                
-                setActive();
-            }
-            var id = Session.get('seatid'+curip);            
-
-            if(id){
-                console.log("yo, there's a seat id");
-                var thing = SeatList.findOne({_id:Session.get('seatid'+curip)});
-                console.log(thing);
-                if(thing.status != "inactive"){
-                    console.log("you're not inactive");
-                    derp = false;
-                }
-            }
-
-            var name = Session.get('studentName'+curip);
-            console.log("STUD NAME: "+name);
-            if(name == "Bill_Booth" || name == "Annie_Mathis"){
-                console.log("you're either booth or annie");
-                derp = false;
-            }
-            return derp;
+            var boop = isInactive();
+            return boop;
+            // var boop = true;
+            // if(Session.get('sesh'+sesh)){ boop=false; }
+            // return boop;
         },
         'prof': function(){
-            var ip = Session.get('curip');
             console.log("is this the prof?");
-            var name = Session.get('studentName'+ip);
+            var name = Session.get('studentName'+Meteor.default_connection._lastSessionId);
             if(name == "Bill_Booth" || name == "Annie_Mathis"){
                 return true;
             }else{
@@ -402,9 +400,8 @@ if(Meteor.isClient){
             Meteor.call('changeQuestionStatus', this._id, "inactive");
         },
         'click .up': function(){
-            var ip = Session.get('curip');
             var vote = Session.get(this._id+"vote");
-            var name = Session.get('studentName'+ip);
+            var name = Session.get('studentName'+Meteor.default_connection._lastSessionId);
             if(!vote){
                 // they haven't voted, and they voted up
                 Session.setPersistent(this._id+"vote", 1);
@@ -416,9 +413,8 @@ if(Meteor.isClient){
             }            
         }, 
         'click .down': function(){
-            var ip = Session.get('curip');
             var vote = Session.get(this._id+"vote");
-            var name = Session.get('studentName'+ip);
+            var name = Session.get('studentName'+Meteor.default_connection._lastSessionId);
             if(!vote){
 
                 // they haven't voted, and they voted up
@@ -445,6 +441,9 @@ if(Meteor.isServer){
     Meteor.publish('log', function(){
         return Log.find();
     });  
+    Meteor.publish('sessions', function(){
+        return Sessions.find();
+    });
 
     // Listen to incoming HTTP requests, can only be used on the server
 WebApp.rawConnectHandlers.use(function(req, res, next) {
